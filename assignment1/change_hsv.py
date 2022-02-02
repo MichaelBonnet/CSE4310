@@ -7,40 +7,7 @@ from matplotlib import pyplot as plt
 
 # Takes an RGB image represented as a numpy array (rgb_image)
 # And converts it into HSV format.
-def rgb_to_hsv_1( rgb_image ):
-
-    height, width, c = rgb_image.shape
-    rgb_image = rgb_image / 255.0
-    r = rgb_image[:,:,0]
-    g = rgb_image[:,:,1]
-    b = rgb_image[:,:,2]
-
-    maxc = np.maximum(np.maximum(r, g), b)  # gets vector of the maximum of R', G', and B' for each pixel
-    minc = np.minimum(np.minimum(r, g), b)  # gets vector of the maximum of R', G', and B' for each pixel
-    deltac = maxc - minc                    # gets difference between max(r,g,b) and min(r,g,b) [Δ]
-
-    # getting V
-    v = maxc
-
-    # getting S
-    s = deltac / v   # proper equation (rather than deltac/maxc)
-    s[v==0] = 0      # catching case where S is undefined due to v being 0
-
-    # getting h
-    h = np.zeros((height, width), np.float32)
-
-    h[deltac==0] = 0
-    h[v==r] = 60 * ( ( (g[v==r] - b[v==r]) / deltac ) % 6)
-    h[v==g] = 60 * ( ( (b[v==g] - r[v==g]) / deltac ) + 2)
-    h[v==b] = 60 * ( ( (r[v==b] - g[v==b]) / deltac ) + 4)
-
-    res = np.stack([h, s, v], axis=-1)
-    return res
-
-
-# Takes an RGB image represented as a numpy array (rgb_image)
-# And converts it into HSV format.
-def rgb_to_hsv_2( rgb_image ):
+def rgb_to_hsv( rgb_image ):
 
     rgb_image = rgb_image / 255            # Normalizing to [0, 1]
     rgb_image = rgb_image.reshape(-1, 3)   # Changing to a 3-column shape
@@ -48,11 +15,19 @@ def rgb_to_hsv_2( rgb_image ):
     g = rgb_image[:, 1]                    # Extracting the G' values to a vector
     b = rgb_image[:, 2]                    # Extracting the B' values to a vector
 
+    print(r)
+    print(g)
+    print(b)
+    print("Size of R: " + str(len(r)) + " G: " + str(len(g)) + " B: " + str(len(b)) )
+
     max = np.maximum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
     min = np.minimum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
 
     # Getting V
     v = max
+
+    print(v)
+    print("Size of V: " + str(len(v)) )
 
     # Getting C
     c = v - min
@@ -61,13 +36,19 @@ def rgb_to_hsv_2( rgb_image ):
     s = c / v
     s[v==0] = 0  # catching case where S is undefined due to V being 0
 
+    print(s)
+    print("Size of S: " + str(len(s)) )
+
     h = np.zeros(rgb_image.shape[0])
-    print("\nprinting h\n")
-    print(h)
+
     h[c==0] = 0
-    h[v==r] = ( ( g[v==r] - b[v==r] ) / c ) % 6
-    h[v==g] = ( ( b[v==g] - r[v==g] ) / c ) + 2
-    h[v==b] = ( ( r[v==b] - g[v==b] ) / c ) + 4
+    # h[v==r] = ( ( g[v==r] - b[v==r] ) / c ) % 6
+    # h[v==g] = ( ( b[v==g] - r[v==g] ) / c ) + 2
+    # h[v==b] = ( ( r[v==b] - g[v==b] ) / c ) + 4
+
+    h[v==r] = ( ( g[v==r] - b[v==r] ) / c[v==r] ) % 6
+    h[v==g] = ( ( b[v==g] - r[v==g] ) / c[v==g] ) + 2
+    h[v==b] = ( ( r[v==b] - g[v==b] ) / c[v==b] ) + 4
     
     h = h * 60
 
@@ -99,12 +80,26 @@ def hsv_to_rgb( hsv_image ):
     # making array for RGB
     rgb = np.zeros_like(hsv_image)
 
-    rgb[0 <= h_prime < 1] = np.hstack([c, x, 0])[0 <= h_prime < 1]
-    rgb[1 <= h_prime < 2] = np.hstack([x, c, 0])[1 <= h_prime < 2]
-    rgb[2 <= h_prime < 3] = np.hstack([0, c, x])[2 <= h_prime < 3]
-    rgb[3 <= h_prime < 4] = np.hstack([0, x, c])[3 <= h_prime < 4]
-    rgb[4 <= h_prime < 5] = np.hstack([x, 0, c])[4 <= h_prime < 5]
-    rgb[5 <= h_prime < 6] = np.hstack([c, 0, x])[5 <= h_prime < 6]
+    # rgb[0 <= h_prime < 1] = np.hstack( [ c[0 <= h_prime < 1], x[0 <= h_prime < 1], 0                   ] )
+    # rgb[1 <= h_prime < 2] = np.hstack( [ x[0 <= h_prime < 1], c[0 <= h_prime < 1], 0                   ] )
+    # rgb[2 <= h_prime < 3] = np.hstack( [ 0,                   c[0 <= h_prime < 1], x[0 <= h_prime < 1] ] )
+    # rgb[3 <= h_prime < 4] = np.hstack( [ 0,                   x[0 <= h_prime < 1], c[0 <= h_prime < 1] ] )
+    # rgb[4 <= h_prime < 5] = np.hstack( [ x[0 <= h_prime < 1], 0,                   c[0 <= h_prime < 1] ] )
+    # rgb[5 <= h_prime < 6] = np.hstack( [ c[0 <= h_prime < 1], 0,                   x[0 <= h_prime < 1] ] )
+
+    mask_0_1 = np.logical_and( 0 <= h_prime, h_prime < 1)
+    mask_1_2 = np.logical_and( 1 <= h_prime, h_prime < 2)
+    mask_2_3 = np.logical_and( 2 <= h_prime, h_prime < 3)
+    mask_3_4 = np.logical_and( 3 <= h_prime, h_prime < 4)
+    mask_4_5 = np.logical_and( 4 <= h_prime, h_prime < 5)
+    mask_5_6 = np.logical_and( 5 <= h_prime, h_prime < 6)
+
+    rgb[mask_0_1] = np.hstack( [ c[mask_0_1], x[mask_0_1], 0           ] )
+    rgb[mask_1_2] = np.hstack( [ x[mask_1_2], c[mask_1_2], 0           ] )
+    rgb[mask_2_3] = np.hstack( [ 0,           c[mask_2_3], x[mask_2_3] ] )
+    rgb[mask_3_4] = np.hstack( [ 0,           x[mask_3_4], c[mask_3_4] ] )
+    rgb[mask_4_5] = np.hstack( [ x[mask_4_5], 0,           c[mask_4_5] ] )
+    rgb[mask_5_6] = np.hstack( [ c[mask_5_6], 0,           x[mask_5_6] ] )
 
     # Getting M for final modification
     m = v - c
@@ -155,23 +150,19 @@ def main(argv, argc):
     image_shape = image.shape
 
     # Conversion
-    image_mod1 = rgb_to_hsv_1(image)
-    image_mod2 = hsv_to_rgb(image_mod1)
+    # image_mod1 = rgb_to_hsv(image)
+    # image_mod2 = hsv_to_rgb(image_mod1)
+
+    image = hsv_to_rgb( rgb_to_hsv(image) )
 
     # show image (will save it later)
-    plt.imshow(image_mod2)
+    plt.imshow(image)
     plt.show()
 
 
 # Calling main()
 if __name__ == "__main__":
     main( sys.argv, len(sys.argv) )
-
-
-
-
-
-
     # 
     #
     #
