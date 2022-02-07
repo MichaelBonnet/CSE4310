@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 # And converts it into HSV format.
 def rgb_to_hsv( rgb_image ):
 
+    shape = rgb_image.shape
+    
     rgb_image = rgb_image / 255            # Normalizing to [0, 1]
     rgb_image = rgb_image.reshape(-1, 3)   # Changing to a 3-column shape
     r = rgb_image[:, 0]                    # Extracting the R' values to a vector
@@ -54,12 +56,12 @@ def rgb_to_hsv( rgb_image ):
 
     hsv_array = np.stack([h, s, v], axis=-1)
     
-    return hsv_array
+    return hsv_array, shape
 
 
 # Takes an HSV image represented as a numpy array (hsv_image) 
 # And converts it into RGB format.
-def hsv_to_rgb( hsv_image ):
+def hsv_to_rgb( hsv_image, shape ):
     
     # Extracting each channel
     h = hsv_image[:, 0]
@@ -109,6 +111,8 @@ def hsv_to_rgb( hsv_image ):
     rgb[:, 1] = rgb[:, 1] + m
     rgb[:, 2] = rgb[:, 2] + m
 
+    rgb = rgb.reshape( shape )
+
     return rgb
 
 
@@ -153,7 +157,9 @@ def main(argv, argc):
     # image_mod1 = rgb_to_hsv(image)
     # image_mod2 = hsv_to_rgb(image_mod1)
 
-    image = hsv_to_rgb( rgb_to_hsv(image) )
+    new_image, new_shape = rgb_to_hsv(image)
+
+    image = hsv_to_rgb( new_image, new_shape )
 
     # show image (will save it later)
     plt.imshow(image)
