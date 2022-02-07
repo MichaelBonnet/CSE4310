@@ -55,6 +55,10 @@ def rgb_to_hsv( rgb_image ):
     h = h * 60
 
     hsv_array = np.stack([h, s, v], axis=-1)
+
+    image = hsv_array.reshape(shape)
+    plt.imshow(image)
+    plt.show()
     
     return hsv_array, shape
 
@@ -82,20 +86,15 @@ def hsv_to_rgb( hsv_image, shape ):
     # making array for RGB
     rgb = np.zeros_like(hsv_image)
 
-    # rgb[0 <= h_prime < 1] = np.hstack( [ c[0 <= h_prime < 1], x[0 <= h_prime < 1], 0                   ] )
-    # rgb[1 <= h_prime < 2] = np.hstack( [ x[0 <= h_prime < 1], c[0 <= h_prime < 1], 0                   ] )
-    # rgb[2 <= h_prime < 3] = np.hstack( [ 0,                   c[0 <= h_prime < 1], x[0 <= h_prime < 1] ] )
-    # rgb[3 <= h_prime < 4] = np.hstack( [ 0,                   x[0 <= h_prime < 1], c[0 <= h_prime < 1] ] )
-    # rgb[4 <= h_prime < 5] = np.hstack( [ x[0 <= h_prime < 1], 0,                   c[0 <= h_prime < 1] ] )
-    # rgb[5 <= h_prime < 6] = np.hstack( [ c[0 <= h_prime < 1], 0,                   x[0 <= h_prime < 1] ] )
+    # Truth value masks
+    mask_0_1 = np.logical_and( 0 <= h_prime, h_prime < 1 )
+    mask_1_2 = np.logical_and( 1 <= h_prime, h_prime < 2 )
+    mask_2_3 = np.logical_and( 2 <= h_prime, h_prime < 3 )
+    mask_3_4 = np.logical_and( 3 <= h_prime, h_prime < 4 )
+    mask_4_5 = np.logical_and( 4 <= h_prime, h_prime < 5 )
+    mask_5_6 = np.logical_and( 5 <= h_prime, h_prime < 6 )
 
-    mask_0_1 = np.logical_and( 0 <= h_prime, h_prime < 1)
-    mask_1_2 = np.logical_and( 1 <= h_prime, h_prime < 2)
-    mask_2_3 = np.logical_and( 2 <= h_prime, h_prime < 3)
-    mask_3_4 = np.logical_and( 3 <= h_prime, h_prime < 4)
-    mask_4_5 = np.logical_and( 4 <= h_prime, h_prime < 5)
-    mask_5_6 = np.logical_and( 5 <= h_prime, h_prime < 6)
-
+    # Populating RGB channels with truth value masks
     rgb[mask_0_1] = np.hstack( [ c[mask_0_1], x[mask_0_1], 0           ] )
     rgb[mask_1_2] = np.hstack( [ x[mask_1_2], c[mask_1_2], 0           ] )
     rgb[mask_2_3] = np.hstack( [ 0,           c[mask_2_3], x[mask_2_3] ] )
