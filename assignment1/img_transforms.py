@@ -12,9 +12,10 @@ from matplotlib import pyplot as plt
 # WORKING
 #   random_crop
 #   resize_img
+#   extract_patch
 
 # NOT WORKING
-#   extract_patch
+#   ?
 
 # UNTESTED
 #   color_jitter
@@ -47,7 +48,6 @@ def random_crop(img, size):
     
     return random_cropped
 
-
 # Testing above
 # Status: WORKING
 def test_random_crop(img, size):
@@ -65,10 +65,10 @@ def test_random_crop(img, size):
 # You may assume that the input image is square.
 def extract_patch(img, num_patches):
 
-    # non-overlapping patches of size (num_patches)
-    size = num_patches # int( img.shape[0] / (num_patches*num_patches) )
+    # non-overlapping patches
     H, W, D = img.shape
-    shape = [H // size, W // size] + [size, size, 3]
+    size = int(H / (num_patches / 2))
+    shape = [H // num_patches, W // num_patches] + [size, size, 3]
 
     # (row, col, patch_row, patch_col)
     strides = [size * s for s in img.strides[:2]] + list(img.strides)
@@ -79,17 +79,29 @@ def extract_patch(img, num_patches):
     # return patches as array as well as an integer n
     return patches
 
-
 # Testing above
-# Status: IN TESTING
-#   Issue with dimensionality
+# Status: WOKRING
 def test_extract_patch(img, num_patches):
 
-    extracted_patches = extract_patch(img, num_patches)
+    patches = extract_patch( img, num_patches )
 
-    for patch in extracted_patches:
-        plt.imshow(patch)
-        plt.show()
+    nrows = int( num_patches / 2 )
+    ncols = int( num_patches / 2 )
+
+    fig = plt.figure()
+    for row in range(nrows):
+        for col in range(ncols):
+            index = row * ncols + col
+            ax = fig.add_subplot(nrows, ncols, index+1)
+            ax.imshow(patches[row,col,:,:])
+            ax.tick_params(left=False,
+                        bottom=False,
+                        labelleft=False,
+                        labelright=False)
+
+    fig.savefig("patches.png")
+
+    plt.show()
 
 
 # Resizing function that resizes an image given an input image as a numpy array
@@ -145,30 +157,6 @@ def color_jitter(img, hue, saturation, value):
 
     # Get newly-perturbed image
     return hsv_to_rgb( hsv_image )
-
-    # Old attempts/scratch work
-    #
-    #
-
-    # hue_modified        = hue        + randint(        ( -1 * hue ),        hue        )
-    # saturation_modified = saturation + random.uniform( ( -1 * saturation ), saturation )
-    # value_modified      = value      + random.uniform( ( -1 * value ),      value      )
-
-    # if saturation_modified > 1:
-    #     saturation_modified = 1
-    # elif saturation_modified < 1:
-    #     saturation_modified = 0
-
-    # if value_modified > 1:
-    #     value_modified = 1
-    # elif value_modified < 1:
-    #     value_modified = 0
-
-    # if hue_modified > 60:
-    #     hue_modified = 60
-    # elif hue_modified < 0:
-    #     hue_modified = 0
-
 
 # Testing above
 # Status: UNTESTED

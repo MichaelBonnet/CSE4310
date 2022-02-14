@@ -81,7 +81,6 @@ def hsv_to_rgb( hsv_image, shape ):
 
     # Getting H' back
     h_prime = h / 60
-    # h_prime = h 
 
     # Getting X
     # X = C * (1 - |H' % 2 - 1| )
