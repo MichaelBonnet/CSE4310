@@ -1,4 +1,4 @@
-from change_hsv import hsv_to_rgb, rgb_to_hsv_1
+from change_hsv import hsv_to_rgb, rgb_to_hsv
 
 from random import randint
 import random
@@ -66,26 +66,18 @@ def test_random_crop(img, size):
 def extract_patch(img, num_patches):
 
     # non-overlapping patches of size (num_patches)
-    size = int( img.shape[0] / (num_patches*num_patches) )
+    size = num_patches # int( img.shape[0] / (num_patches*num_patches) )
     H, W, D = img.shape
-    shape = [H // size, W // size] + [size, size]
-    print("\n\nshape        = " + str(shape) )
+    shape = [H // size, W // size] + [size, size, 3]
 
     # (row, col, patch_row, patch_col)
-    print("img.strides  = " + str(img.strides))
-    strides = [size * s for s in img.strides[:2]] + list(img.strides[:2])
-    print("Stride Count = " + str(len(strides)) )
-    # extract patches
-    print("Shape        = " + str(shape)   )
-    print("Strides      = " + str(strides) )
-    patches = stride_tricks.as_strided(img, shape=shape, strides=strides)
-    print("Patch Count  = " + str(len(patches)) )
+    strides = [size * s for s in img.strides[:2]] + list(img.strides)
 
-    for patch in patches:
-        print(patch.shape)    
+    # extract patches
+    patches = stride_tricks.as_strided(img, shape=shape, strides=strides) 
     
     # return patches as array as well as an integer n
-    return patches, num_patches
+    return patches
 
 
 # Testing above
@@ -93,9 +85,7 @@ def extract_patch(img, num_patches):
 #   Issue with dimensionality
 def test_extract_patch(img, num_patches):
 
-    extracted_patches, n = extract_patch(img, num_patches)
-
-    print("\n\n"+str(n)+"\n\n")
+    extracted_patches = extract_patch(img, num_patches)
 
     for patch in extracted_patches:
         plt.imshow(patch)
@@ -121,6 +111,7 @@ def resize_img(img, scale_factor):
 # Testing above
 # Status: WORKING
 def test_resize_img(img, scale_factor):
+    
     resized_image = resize_img(img, scale_factor)
 
     plt.imshow(resized_image)
@@ -132,7 +123,7 @@ def test_resize_img(img, scale_factor):
 # This should use your code from the first part of the assignment to modify the HSV channels.
 def color_jitter(img, hue, saturation, value):
 
-    hsv_image = rgb_to_hsv_1(img)
+    hsv_image = rgb_to_hsv(img)
     
     hsv_image[:, 0] = hsv_image[:, 0] + randint(        ( -1 * hue ),        hue        )  # Perturbing H channel
     hsv_image[:, 1] = hsv_image[:, 1] + random.uniform( ( -1 * saturation ), saturation )  # Perturbing S channel
@@ -192,8 +183,8 @@ def test_color_jitter(img, hue, saturation, value):
 # Main function
 def main(argv, argc):
 
-    filename             = argv[1]
-    option               = argv[2]
+    filename = argv[1]
+    option   = argv[2]
 
     image = np.asarray( Image.open(filename) )
 

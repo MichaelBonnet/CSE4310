@@ -17,19 +17,11 @@ def rgb_to_hsv( rgb_image ):
     g = rgb_image[:, 1]                    # Extracting the G' values to a vector
     b = rgb_image[:, 2]                    # Extracting the B' values to a vector
 
-    print(r)
-    print(g)
-    print(b)
-    print("Size of R: " + str(len(r)) + " G: " + str(len(g)) + " B: " + str(len(b)) )
-
     max = np.maximum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
     min = np.minimum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
 
     # Getting V
     v = max
-
-    print(v)
-    print("Size of V: " + str(len(v)) )
 
     # Getting C
     c = v - min
@@ -38,20 +30,31 @@ def rgb_to_hsv( rgb_image ):
     s = c / v
     s[v==0] = 0  # catching case where S is undefined due to V being 0
 
-    print(s)
-    print("Size of S: " + str(len(s)) )
-
+    # Holding array for h
     h = np.zeros(rgb_image.shape[0])
 
-    h[c==0] = 0
-    # h[v==r] = ( ( g[v==r] - b[v==r] ) / c ) % 6
-    # h[v==g] = ( ( b[v==g] - r[v==g] ) / c ) + 2
-    # h[v==b] = ( ( r[v==b] - g[v==b] ) / c ) + 4
+    # Populating h
+    # h[c==0] = 0
+    # h[v==r] = ( ( g[v==r] - b[v==r] ) / c[v==r] ) % 6
+    # h[v==g] = ( ( b[v==g] - r[v==g] ) / c[v==g] ) + 2
+    # h[v==b] = ( ( r[v==b] - g[v==b] ) / c[v==b] ) + 4
 
-    h[v==r] = ( ( g[v==r] - b[v==r] ) / c[v==r] ) % 6
-    h[v==g] = ( ( b[v==g] - r[v==g] ) / c[v==g] ) + 2
-    h[v==b] = ( ( r[v==b] - g[v==b] ) / c[v==b] ) + 4
+    print("\n\nRange is "+str( len(h) )+"\n\n" )
+    for i in range(len(h)):
+        if c[i] == 0:
+            h[i] = 0
+        elif v[i] == r[i]:
+            h[i] = ( ( g[i] - b[i] ) / c[i] ) % 6
+        elif v[i] == g[i]:
+            h[i] = ( ( b[i] - r[i] ) / c[i] ) + 2
+        elif v[i] == b[i]:
+            h[i] = ( ( r[i] - g[i] ) / c[i] ) + 4
+
+    for i in range(len(h)):
+        if not h[i].any():
+            print("h at index "+str(i)+" is "+str(h[i]) )
     
+    # Modifying to a degree value
     h = h * 60
 
     hsv_array = np.stack([h, s, v], axis=-1)
@@ -78,6 +81,7 @@ def hsv_to_rgb( hsv_image, shape ):
 
     # Getting H' back
     h_prime = h / 60
+    # h_prime = h 
 
     # Getting X
     # X = C * (1 - |H' % 2 - 1| )
@@ -85,6 +89,8 @@ def hsv_to_rgb( hsv_image, shape ):
 
     # making array for RGB
     rgb = np.zeros_like(hsv_image)
+
+    print( "Shape of = "+str( rgb.shape ) )
 
     # Truth value masks
     mask_0_1 = np.logical_and( 0 <= h_prime, h_prime < 1 )
@@ -153,11 +159,7 @@ def main(argv, argc):
     image_shape = image.shape
 
     # Conversion
-    # image_mod1 = rgb_to_hsv(image)
-    # image_mod2 = hsv_to_rgb(image_mod1)
-
     new_image, new_shape = rgb_to_hsv(image)
-
     image = hsv_to_rgb( new_image, new_shape )
 
     # show image (will save it later)
@@ -205,8 +207,6 @@ at this point, H' will be some value between 0 and 6
 the value is then adapted to range [0, 360]:
 
     H = 60 deg * H'
-
-
 
 Converting TO RGB
 
