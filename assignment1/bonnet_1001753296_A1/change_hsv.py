@@ -7,68 +7,47 @@ from matplotlib import pyplot as plt
 
 # Takes an RGB image represented as a numpy array (rgb_image)
 # And converts it into HSV format.
-def rgb_to_hsv( rgb_image ):
+def rgb_to_hsv(image):
 
-    shape = rgb_image.shape
+    image_norm = image /255
+    R = image_norm[:,:,0]
+    G = image_norm[:,:,1]
+    B = image_norm[:,:,2]
     
-    rgb_image = rgb_image / 255            # Normalizing to [0, 1]
-    rgb_image = rgb_image.reshape(-1, 3)   # Changing to a 3-column shape
-    r = rgb_image[:, 0]                    # Extracting the R' values to a vector
-    g = rgb_image[:, 1]                    # Extracting the G' values to a vector
-    b = rgb_image[:, 2]                    # Extracting the B' values to a vector
-
-    max = np.maximum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
-    min = np.minimum(r, g, b)  # gets vector of the maximum of R', G', and B' for each pixel
-
-    # Getting V
-    v = max
-
-    # Getting C
-    c = v - min
-
-    # Getting S
-    s = c / v
-    s[v==0] = 0  # catching case where S is undefined due to V being 0
-
-    # Holding array for h
-    h = np.zeros(rgb_image.shape[0])
-
-    # Populating h
-    # h[c==0] = 0
-    # h[v==r] = ( ( g[v==r] - b[v==r] ) / c[v==r] ) % 6
-    # h[v==g] = ( ( b[v==g] - r[v==g] ) / c[v==g] ) + 2
-    # h[v==b] = ( ( r[v==b] - g[v==b] ) / c[v==b] ) + 4
-
-    print("\n\nRange is "+str( len(h) )+"\n\n" )
-    for i in range(len(h)):
-        if c[i] == 0:
-            h[i] = 0
-        elif v[i] == r[i]:
-            h[i] = ( ( g[i] - b[i] ) / c[i] ) % 6
-        elif v[i] == g[i]:
-            h[i] = ( ( b[i] - r[i] ) / c[i] ) + 2
-        elif v[i] == b[i]:
-            h[i] = ( ( r[i] - g[i] ) / c[i] ) + 4
-
-    for i in range(len(h)):
-        if not h[i].any():
-            print("h at index "+str(i)+" is "+str(h[i]) )
+    v_max = np.max(image_norm,axis=2)
+    v_min = np.min(image_norm,axis=2)
+    C = v_max - v_min
     
-    # Modifying to a degree value
-    h = h * 60
-
-    hsv_array = np.stack([h, s, v], axis=-1)
-
-    image = hsv_array.reshape(shape)
-    plt.imshow(image)
-    plt.show()
+    hue_defined = C > 0 
     
-    return hsv_array, shape
+    r_is_max = np.logical_and(R == v_max, hue_defined)
+    g_is_max = np.logical_and(G == v_max, hue_defined)
+    b_is_max = np.logical_and(B == v_max, hue_defined)
+    
+    H = np.zeros_like(v_max)
+    H_r = ((G[r_is_max] - B[r_is_max]) / C[r_is_max]) % 6
+    H_g = ((B[g_is_max] - R[g_is_max]) / C[g_is_max]) + 2
+    H_b = ((R[b_is_max] - G[b_is_max]) / C[b_is_max]) + 4
+    
+    H[r_is_max] = H_r
+    H[g_is_max] = H_g
+    H[b_is_max] = H_b
+    H *= 60
+    
+    V = v_max
+    
+    sat_defined = V > 0
+    print(sat_defined)
+    
+    S = np.zeros_like(v_max)
+    S[sat_defined] = C[sat_defined] / V[sat_defined]
+    
+    return np.dstack((H, S, V))
 
 
 # Takes an HSV image represented as a numpy array (hsv_image) 
 # And converts it into RGB format.
-def hsv_to_rgb( hsv_image, shape ):
+def hsv_to_rgb( hsv_image ):
     
     # Extracting each channel
     h = hsv_image[:, 0]
@@ -177,58 +156,3 @@ if __name__ == "__main__":
     #
     #
     #
-
-'''
-Converting from RGB
-
-assume input RGB from [0,1]; normalize it if needed
-Value, V, = max(R,G,B)
-^ NP.max across the entire image
-
-Saturation based on chroma
-
-Chroma, C = V - min(R,G,B)
-    ^ max(R,G,B) - min(R,G,B)
-
-Given C and V, saturation is the ratio between the two. Undefined if V=0
-Saturation, S = C / V
-    Will put 0 for S if V=0
-
-Hue measured in [0, 360] degrees
-
-H' =
-    0, C=0
-    ( (G - B) / C ) mod 6, V=R
-    ( (B - R) / C ) + 2,   V=G
-    ( (R - G) / C ) + 4,   V=B
-
-at this point, H' will be some value between 0 and 6
-the value is then adapted to range [0, 360]:
-
-    H = 60 deg * H'
-
-Converting TO RGB
-
-Chroma (C) = V * S
-
-Hue divided back into a value between [0, 6]:
-
-    H' = H / 60
-
-X = C * (1 - |H' % 2 - 1| )
-
-then
-
-(R', G', B') = 
-    (C, X, 0) if 0 <= H' < 1
-    (X, C, 0) if 1 <= H' < 2
-    (0, C, X) if 2 <= H' < 3
-    (0, X, C) if 3 <= H' < 4
-    (X, 0, C) if 4 <= H' < 5
-    (C, 0, X) if 5 <= H' < 6
-
-then match the original RGB value by adding the same difference m = V - C to each channel:
-
-    (R, G, B) = (R' + m, G' + m, B' + m)
-
-'''
