@@ -1,0 +1,4 @@
+I was unable to write a report due to being unable to make my transforms work, leading to being unable to test RANSAC.
+
+This was a little confusing, as my issue with the affine transform was related to dimensionality,
+when classmates confirmed that the dimensions of my arrays and such were correct.
