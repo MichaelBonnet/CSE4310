@@ -1,8 +1,12 @@
 import sys
 import random
 import argparse
+import detecting_motion
 
 from PySide2 import QtCore, QtWidgets, QtGui
+from assignment3.detecting_motion import MotionDetector
+import skvideo
+skvideo.setFFmpegPath('/Users/michaelbonnet/Downloads/ffmpeg')
 from skvideo.io import vread
 
 
@@ -50,7 +54,10 @@ class QtDemo(QtWidgets.QWidget):
         else:
             img = QtGui.QImage(self.frames[self.current_frame], w, h, QtGui.QImage.Format_RGB888)
         self.img_label.setPixmap(QtGui.QPixmap.fromImage(img))
-        self.current_frame += 1
+        self.current_frame += 60
+        md = MotionDetector(self.frames[self.current_frame], self.frames[self.current_frame+1], self.frames[self.current_frame+2], 1, 2, 3, 4, 5)
+
+
 
     @QtCore.Slot()
     def on_move(self, pos):
